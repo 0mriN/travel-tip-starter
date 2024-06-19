@@ -72,11 +72,13 @@
             </section>
         </div>
         <dialog>
-            <form>
+            <button class="btn-close" onclick="app.closeModal()">x</button>
+            <form onsubmit="app.onSaveLoc(event)">
                 <label for="name">Location name:</label><br>
-                <input type="text" id="loc-name" value=""><br>
+                <input type="text" class="loc-name-dialog" autofocus ><br>
                 <label for="rate">Rate this location</label><br>
-                <input type="text" id="loc-name" value="" placeholder="1-5">
+                <input type="text" class="loc-rate-dialog" placeholder="1-5">
+                <button  class="btn-submit">Submit</button>
             </form>
         </dialog>
     </main>

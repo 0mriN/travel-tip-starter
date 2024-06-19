@@ -4,6 +4,7 @@ import { mapService } from './services/map.service.js'
 
 window.onload = onInit
 
+let gGeo
 // To make things easier in this project structure 
 // functions that are called from DOM are defined on a global app object
 window.app = {
@@ -16,7 +17,12 @@ window.app = {
     onShareLoc,
     onSetSortBy,
     onSetFilterBy,
+    openModal,
+    closeModal,
+    onSaveLoc,
+    clearForm,
 }
+
 
 function onInit() {
     getFilterByFromQueryParams()
@@ -96,24 +102,8 @@ function onSearchAddress(ev) {
 }
 
 function onAddLoc(geo) {
-    const locName = prompt('Loc name', geo.address || 'Just a place')
-    if (!locName) return
-
-    const loc = {
-        name: locName,
-        rate: +prompt(`Rate (1-5)`, '3'),
-        geo
-    }
-    locService.save(loc)
-        .then((savedLoc) => {
-            flashMsg(`Added Location (id: ${savedLoc.id})`)
-            utilService.updateQueryParams({ locId: savedLoc.id })
-            loadAndRenderLocs()
-        })
-        .catch(err => {
-            console.error('OOPs:', err)
-            flashMsg('Cannot add location')
-        })
+    openModal()
+    gGeo = geo
 }
 
 function loadAndRenderLocs() {
@@ -140,9 +130,24 @@ function onPanToUserPos() {
 }
 
 function onUpdateLoc(locId) {
+    openModal()
     locService.getById(locId)
+        .then(res => {
+            const elDialog = document.querySelector('dialog')
+            elDialog.querySelector('.loc-name-dialog').value = res.name
+            elDialog.querySelector('.loc-rate-dialog').value = res.rate
+        })
+
+
+
+    locService.getById(locId)
+        // .then(res => {
+        //     const elDialog = document.querySelector('dialog')
+        //     elDialog.querySelector('.loc-name-dialog').value = res.name
+        //     elDialog.querySelector('.loc-rate-dialog').value = res.rate
+        // })
         .then(loc => {
-            const rate = prompt('New rate?', loc.rate)
+            const rate = document.querySelector('.loc-rate-dialog').value
             if (rate !== loc.rate) {
                 loc.rate = rate
                 locService.save(loc)
@@ -322,7 +327,55 @@ function cleanStats(stats) {
     return cleanedStats
 }
 
-function showDialog(){
-    
-    
+function openModal() {
+    const elDialog = document.querySelector('dialog')
+    elDialog.showModal()
+}
+
+function closeModal() {
+    const elDialog = document.querySelector('dialog')
+    elDialog.close()
+    // clearForm()
+
+}
+
+function onSaveLoc(ev) {
+    ev.preventDefault()
+    // clearForm()
+
+    const elDialog = document.querySelector('dialog')
+    const elLocName = elDialog.querySelector('.loc-name-dialog').value
+    const elRate = elDialog.querySelector('.loc-rate-dialog').value
+
+    if (!elLocName || !elRate) {
+        console.error('Location name or rate cannot be empty');
+        return;
+    }
+
+
+
+    const loc = {
+        name: elLocName,
+        rate: elRate,
+        geo: gGeo
+    }
+
+    locService.save(loc)
+        .then((savedLoc) => {
+            flashMsg(`Added Location (id: ${savedLoc.id})`)
+            utilService.updateQueryParams({ locId: savedLoc.id })
+            loadAndRenderLocs()
+        })
+        .catch(err => {
+            console.error('OOPs:', err)
+            flashMsg('Cannot add location')
+        })
+    clearForm()
+    closeModal()
+}
+
+function clearForm() {
+    console.log('hello clearForm');
+    document.querySelector('.loc-name-dialog').value = ""
+    document.querySelector('.loc-rate-dialog').value = ""
 }
