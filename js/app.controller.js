@@ -132,36 +132,17 @@ function onPanToUserPos() {
 function onUpdateLoc(locId) {
     openModal()
     locService.getById(locId)
-        .then(res => {
-            const elDialog = document.querySelector('dialog')
-            elDialog.querySelector('.loc-name-dialog').value = res.name
-            elDialog.querySelector('.loc-rate-dialog').value = res.rate
-        })
-
-
-
-    locService.getById(locId)
-        // .then(res => {
-        //     const elDialog = document.querySelector('dialog')
-        //     elDialog.querySelector('.loc-name-dialog').value = res.name
-        //     elDialog.querySelector('.loc-rate-dialog').value = res.rate
-        // })
         .then(loc => {
-            const rate = document.querySelector('.loc-rate-dialog').value
-            if (rate !== loc.rate) {
-                loc.rate = rate
-                locService.save(loc)
-                    .then(savedLoc => {
-                        flashMsg(`Rate was set to: ${savedLoc.rate}`)
-                        loadAndRenderLocs()
-                    })
-                    .catch(err => {
-                        console.error('OOPs:', err)
-                        flashMsg('Cannot update location')
-                    })
-
-            }
+            const elDialog = document.querySelector('dialog')
+            elDialog.querySelector('.loc-name-dialog').value = loc.name
+            elDialog.querySelector('.loc-rate-dialog').value = loc.rate
+            elDialog.dataset.locId = locId
         })
+        .catch(err => {
+            console.error('OOPs:', err)
+            flashMsg('Cannot update location')
+        })
+
 }
 
 function onSelectLoc(locId) {
@@ -335,24 +316,21 @@ function openModal() {
 function closeModal() {
     const elDialog = document.querySelector('dialog')
     elDialog.close()
-    // clearForm()
-
+    clearForm()
 }
 
 function onSaveLoc(ev) {
     ev.preventDefault()
-    // clearForm()
 
     const elDialog = document.querySelector('dialog')
+    const locId = elDialog.dataset.locId
     const elLocName = elDialog.querySelector('.loc-name-dialog').value
     const elRate = elDialog.querySelector('.loc-rate-dialog').value
 
     if (!elLocName || !elRate) {
-        console.error('Location name or rate cannot be empty');
-        return;
+        console.error('Location name or rate cannot be empty')
+        return
     }
-
-
 
     const loc = {
         name: elLocName,
@@ -360,22 +338,42 @@ function onSaveLoc(ev) {
         geo: gGeo
     }
 
-    locService.save(loc)
-        .then((savedLoc) => {
-            flashMsg(`Added Location (id: ${savedLoc.id})`)
-            utilService.updateQueryParams({ locId: savedLoc.id })
-            loadAndRenderLocs()
-        })
-        .catch(err => {
-            console.error('OOPs:', err)
-            flashMsg('Cannot add location')
-        })
-    clearForm()
-    closeModal()
+    if (locId) {
+
+        loc.id = locId
+        locService.save(loc)
+            .then((savedLoc) => {
+                flashMsg(`Updated Location (id: ${savedLoc.id})`)
+                utilService.updateQueryParams({ locId: savedLoc.id })
+                loadAndRenderLocs()
+                clearForm()
+                closeModal()
+            })
+            .catch(err => {
+                console.error('OOPs:', err)
+                flashMsg('Cannot update location')
+            })
+    } else {
+
+        locService.save(loc)
+            .then((savedLoc) => {
+                flashMsg(`Added Location (id: ${savedLoc.id})`)
+                utilService.updateQueryParams({ locId: savedLoc.id })
+                loadAndRenderLocs()
+                clearForm()
+                closeModal()
+            })
+            .catch(err => {
+                console.error('OOPs:', err)
+                flashMsg('Cannot add location')
+            })
+
+    }
 }
 
 function clearForm() {
-    console.log('hello clearForm');
+    console.log('hello clearForm')
     document.querySelector('.loc-name-dialog').value = ""
     document.querySelector('.loc-rate-dialog').value = ""
+    delete document.querySelector('dialog').dataset.locId
 }
