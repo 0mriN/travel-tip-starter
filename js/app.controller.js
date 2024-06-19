@@ -314,3 +314,8 @@ function cleanStats(stats) {
     }, [])
     return cleanedStats
 }
+
+function showDialog(){
+    
+    
+}
